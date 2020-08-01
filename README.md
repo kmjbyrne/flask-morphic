@@ -15,6 +15,7 @@ pip install SQLAlchemy-Morphic
 ## Available Morphs
 
 |:Argument String|Example Values|
+|---|---|
 |...|...|
 |...|...|
 |...|...|
