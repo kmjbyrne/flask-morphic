@@ -15,6 +15,14 @@ def primarykey(model):
     return model.__mapper__.primary_key[0].name
 
 
+def get_primary_key(model):
+    return model.__mapper__.primary_key[0].name
+
+
+def get_primary_key_field(model):
+    return model.__mapper__.primary_key[0]
+
+
 def hidden_fields(element):
     return set([getattr(col, 'name', col) for col in getattr(element, '__hidden__', set())])
 
@@ -40,10 +48,20 @@ def update(self, commit=True, **kwargs):
 
 
 def related(model, lookup=None):
+    if isinstance(model, tuple):
+        return list()
+
     if lookup:
         return getattr(model, lookup).entity.entity
-    related_models = [i.entity.entity for i in model.__mapper__.relationships]
+
+    related_models = list()
+    for i in model.__mapper__.relationships:
+        related_models.append(i.entity.entity)
     return related_models
+
+
+def get_relationships(model):
+    return list(model.__mapper__.relationships)
 
 
 def relationships(model, fmt=False):
@@ -54,6 +72,8 @@ def relationships(model, fmt=False):
 
 
 def columns(model, strformat=False, relations=None):
+    if isinstance(model, tuple):
+        return model._fields
     if not model:
         return None
     bound_columns = set(model.__mapper__.columns)
@@ -315,4 +335,14 @@ def serialize(model, data, fields=None, exc: Optional[set] = None, rels=None, ro
     resp = []
     for element in data:
         resp.append(process(element))
+    return resp
+
+
+def json(data):
+    resp = None
+
+    if isinstance(data, list):
+        resp = []
+    for item in data:
+        resp.append(extract(item))
     return resp

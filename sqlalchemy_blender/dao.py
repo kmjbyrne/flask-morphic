@@ -64,7 +64,7 @@ class ModelDAO:
             raise HTTPConflict(str(exc.orig.args[1]))
         except ProgrammingError as exc:
             if exc.orig.args[0] == 1064:
-                raise HTTPNotProcessable()
+                raise HTTPNotProcessable(str(exc))
         except Exception as exc:
             session = current_app.extensions['sqlalchemy'].db.session
             try:
@@ -75,7 +75,8 @@ class ModelDAO:
                 session = session.object_session()
                 getattr(session, operation)(instance)
                 session.commit()
-            except Exception:
+            except Exception as exc:
+                raise exc
                 session.rollback()
                 session.flush()
                 # session.closed()
@@ -107,7 +108,8 @@ class ModelDAO:
             instance.creator_id = kwargs.get('user')
 
         self.update(instance, _payload)
-        return self.save(instance)
+        self.save(instance)
+        return instance
 
     def remove(self, instance, item):
         getattr(instance, item).remove(item)
@@ -124,6 +126,11 @@ class ModelDAO:
         for mtm in set([i.key for i in rels]).intersection(set(payload.keys())):
             model = getattr(instance, mtm)
 
+            value = payload.get(mtm, None)
+            if value is None:
+                setattr(instance, mtm, None)
+                continue
+
             if not model and not isinstance(model, list):
                 _instance = getattr(instance.__mapper__.relationships, mtm).entity.entity
                 _lookup = mtm
@@ -139,7 +146,10 @@ class ModelDAO:
 
             if not isinstance(model, list):
                 _instance = getattr(instance.__mapper__.relationships, mtm).entity.entity
-                _lookup = payload.get(mtm).get('id', None)
+
+                _lookup = payload[mtm]
+                if not isinstance(_lookup, int):
+                    _lookup = payload.get(mtm).get('id', None)
                 elem = self.session().query(_instance).get(_lookup)
                 setattr(instance, mtm, elem)
                 continue

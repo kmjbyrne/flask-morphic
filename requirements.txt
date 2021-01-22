@@ -5,8 +5,9 @@ click==7.1.2
 colorama==0.4.4
 docutils==0.16
 Flask==1.1.2
+Flask-Atomic==0.1.8
 Flask-SQLAlchemy==2.4.4
-HandyHTTP==0.0.6
+HandyHTTP==0.1.0
 idna==2.10
 importlib-metadata==2.0.0
 itsdangerous==1.1.0

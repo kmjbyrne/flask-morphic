@@ -5,16 +5,18 @@ from flask import current_app
 from flask_sqlalchemy import BaseQuery
 from sqlalchemy.ext.declarative import DeclarativeMeta
 
-from flask_atomic.orm.base import DeclarativeBase
+# from flask_atomic.orm.base import DeclarativeBase
 from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.orm import load_only
 from sqlalchemy import desc
+from sqlalchemy import func
 
 from sqlalchemy_blender import serialize
 from sqlalchemy_blender import relationships
 from sqlalchemy_blender import columns
 from sqlalchemy_blender import serialize
-from sqlalchemy_blender.helpers import related
+from sqlalchemy_blender.helpers import get_primary_key_field
+from sqlalchemy_blender.helpers import get_relationships
 from sqlalchemy_blender.query.processor import QueryStringProcessor
 
 from handyhttp import HTTPNotFound
@@ -83,8 +85,8 @@ class QueryBuffer:
         self.basequery = query
         return self.basequery
 
-    def apply(self, pending=False, inactive=False):
-        entity = self.basequery._entity_zero()
+    def apply(self, pending=False, inactive=False, query=None, entity=None):
+        entity = entity or self.basequery._entity_zero()
         base_fields = set(map(lambda x: x.key, entity.column_attrs))
         _relationships = set(map(lambda x: x.key, entity.relationships))
         keys = columns(self.model, strformat=True)
@@ -195,20 +197,20 @@ class QueryBuffer:
             self.data = self.pagedquery.items
             self.count = getattr(self.basequery, 'count')()
             return self
-            # raise ValueError('Cannot run all on a paginated query object')
-        self.data = self.basequery.all()
 
         if counts:
-            for idx, item in enumerate(self.data):
-                rels = related(item)
-                counts = {}
-                for rel in rels:
-                    field = getattr(rel, item.__tablename__, None)
-                    if not field:
-                        continue
-                    resp = rel.query.filter(field.expression.right == item.id).count()
-                    counts[rel.__tablename__] = resp
-                setattr(self.data[idx], '__counts__', counts)
+            rels = get_relationships(self.model)
+            primary_key = get_primary_key_field(self.model)
+            query = self.session.query(self.model)
+            count_queries = []
+            for rel in rels:
+                count = func.count(getattr(self.model, rel.key))
+                count_queries.append(count)
+                # self.basequery = self.basequery.with_entities(count)
+                # query = query.with_entities(self.model, count)
+            query = query.with_entities(self.model, *count_queries)
+            query = query.group_by(primary_key)
+        self.data = self.basequery.all()
         self.count = len(self.data)
         return self
 
@@ -228,7 +230,8 @@ class QueryBuffer:
         query = self.basequery.filter_by(**filter_expression)
         self.data = query.first()
         if not self.data:
-            raise HTTPNotFound(f'{str(self.model.__dict__.get("__tablename__")).capitalize()} not found!')
+            pass
+            # raise HTTPNotFound(f'{str(self.model.__dict__.get("__tablename__")).capitalize()} not found!')
         for item in set([str(i.key) for i in relationships(self.model)]).intersection(self.queryargs.include):
             _item = item
             if not isinstance(_item, str):

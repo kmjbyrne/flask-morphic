@@ -1,3 +1,5 @@
+import flask_sqlalchemy
+
 from sqlalchemy_blender.helpers import serialize
 from sqlalchemy_blender.helpers import iserialize
 from sqlalchemy_blender.helpers import relationships
@@ -9,11 +11,10 @@ from sqlalchemy_blender.query.buffer import QueryBuffer
 
 __all__ = [relationships, columns, serialize, iserialize, helpers, QueryBuffer, db]
 
-import flask_sqlalchemy
 
-'''Created by Isaac Martin 2017. Licensed insofar as it can be according to the standard terms of the MIT license: 
+"""Created by Isaac Martin 2017. Licensed insofar as it can be according to the standard terms of the MIT license: 
 https://en.wikipedia.org/wiki/MIT_License. The author accepts no liability for consequences resulting from the use of 
-this software. '''
+this software."""
 
 
 class SQLAlchemy(flask_sqlalchemy.SQLAlchemy):
@@ -87,12 +88,3 @@ class SQLAlchemy(flask_sqlalchemy.SQLAlchemy):
                     c.query_class = self.Query
                 if not hasattr(c, 'query'):
                     c.query = flask_sqlalchemy._QueryProperty(self)
-
-                    # for name in dir(c):
-                    #     attr = getattr(c, name)
-                    #     if type(attr) == orm.attributes.InstrumentedAttribute:
-                    #         if hasattr(attr.prop, 'query_class'):
-                    #             attr.prop.query_class = self.Query
-
-                    # if hasattr(c , 'rel_dynamic'):
-                    #     c.rel_dynamic.prop.query_class = self.Query

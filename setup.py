@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='SQLAlchemyBlender',
-    version='0.1.2',
+    version='0.1.50',
     description='Helpers package for SQL-Alchemy',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -16,7 +16,7 @@ setup(
         'Programming Language :: Python :: 3.7',
     ],
     keywords='python library utilities',
-    url='https://github.com/kmjbyrne/sqlalchemy-abc',
+    url='https://github.com/kmjbyrne/sqlalchemy-blender',
     author='Keith Byrne',
     author_email='keithmbyrne@gmail.com',
     license='MIT',
